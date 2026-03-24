@@ -50,7 +50,7 @@
   </div>
 
   <div class="fallback" id="fallback" style="display:none">
-    <p>Also try: <a href="http://pop-os.local:8443">pop-os.local:8443</a></p>
+    <p>Also try: <a href="https://pop-os.local:8443">pop-os.local:8443</a></p>
   </div>
 
   <div class="manual" id="manual" style="display:none">
@@ -73,9 +73,9 @@ async function tryConnect() {
   if (LANDDROP_IP !== "LANDDROP_PLACEHOLDER_IP") {
     status.textContent = `Connecting to ${LANDDROP_IP}...`;
     try {
-      const resp = await fetchWithTimeout(`http://${LANDDROP_IP}:${PORT}/health`, 3000);
+      const resp = await fetchWithTimeout(`https://${LANDDROP_IP}:${PORT}/health`, 3000);
       if (resp.ok) {
-        window.location.href = `http://${LANDDROP_IP}:${PORT}`;
+        window.location.href = `https://${LANDDROP_IP}:${PORT}`;
         return;
       }
     } catch(e) {}
@@ -84,9 +84,9 @@ async function tryConnect() {
   // Try mDNS
   status.textContent = 'Trying pop-os.local...';
   try {
-    const resp = await fetchWithTimeout(`http://pop-os.local:${PORT}/health`, 3000);
+    const resp = await fetchWithTimeout(`https://pop-os.local:${PORT}/health`, 3000);
     if (resp.ok) {
-      window.location.href = `http://pop-os.local:${PORT}`;
+      window.location.href = `https://pop-os.local:${PORT}`;
       return;
     }
   } catch(e) {}
@@ -108,7 +108,7 @@ function fetchWithTimeout(url, ms) {
 
 function goManual() {
   const ip = document.getElementById('ipInput').value.trim();
-  if (ip) window.location.href = `http://${ip}:${PORT}`;
+  if (ip) window.location.href = `https://${ip}:${PORT}`;
 }
 
 tryConnect();
