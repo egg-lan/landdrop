@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LandDrop">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a2e' width='100' height='100' rx='20'/><text y='68' x='50' text-anchor='middle' font-size='55'>📥</text></svg>">
+<title>LandDrop</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #1a1a2e; color: #e0e0e0;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+    text-align: center;
+  }
+  .icon { font-size: 4em; margin-bottom: 15px; }
+  h1 { font-size: 1.6em; margin-bottom: 8px; }
+  .status { color: #60a5fa; margin-bottom: 20px; font-size: 0.95em; }
+  .spinner {
+    width: 30px; height: 30px; border: 3px solid #333;
+    border-top-color: #6c63ff; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 15px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #f87171; }
+  .fallback { margin-top: 20px; color: #666; font-size: 0.85em; }
+  .fallback a { color: #6c63ff; text-decoration: none; }
+  .manual { margin-top: 30px; }
+  .manual input {
+    background: #2a2a4a; border: 1px solid #444; color: #fff;
+    padding: 10px 15px; border-radius: 10px; font-size: 1em;
+    width: 200px; text-align: center;
+  }
+  .manual button {
+    background: #6c63ff; color: #fff; border: none;
+    padding: 10px 20px; border-radius: 10px; font-size: 1em;
+    cursor: pointer; margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="icon">📥</div>
+  <h1>LandDrop</h1>
+  <div id="content">
+    <p class="status" id="status">Connecting to your laptop...</p>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div class="fallback" id="fallback" style="display:none">
+    <p>Also try: <a href="http://pop-os.local:8443">pop-os.local:8443</a></p>
+  </div>
+
+  <div class="manual" id="manual" style="display:none">
+    <p style="color:#888; margin-bottom:10px; font-size:0.9em">Or enter your laptop's IP:</p>
+    <input type="text" id="ipInput" placeholder="e.g. 10.0.0.61">
+    <br>
+    <button onclick="goManual()">Connect</button>
+  </div>
+
+<script>
+// LANDDROP_IP is updated by the laptop on boot
+const LANDDROP_IP = "LANDDROP_PLACEHOLDER_IP";
+const PORT = 8443;
+
+async function tryConnect() {
+  const status = document.getElementById('status');
+  const spinner = document.getElementById('spinner');
+
+  // Try the stored IP first
+  if (LANDDROP_IP !== "LANDDROP_PLACEHOLDER_IP") {
+    status.textContent = `Connecting to ${LANDDROP_IP}...`;
+    try {
+      const resp = await fetchWithTimeout(`http://${LANDDROP_IP}:${PORT}/health`, 3000);
+      if (resp.ok) {
+        window.location.href = `http://${LANDDROP_IP}:${PORT}`;
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Try mDNS
+  status.textContent = 'Trying pop-os.local...';
+  try {
+    const resp = await fetchWithTimeout(`http://pop-os.local:${PORT}/health`, 3000);
+    if (resp.ok) {
+      window.location.href = `http://pop-os.local:${PORT}`;
+      return;
+    }
+  } catch(e) {}
+
+  // Nothing worked
+  spinner.style.display = 'none';
+  status.innerHTML = '<span class="error">Could not reach laptop</span>';
+  status.innerHTML += '<br><span style="color:#888;font-size:0.85em">Make sure you\'re on the same WiFi</span>';
+  document.getElementById('fallback').style.display = 'block';
+  document.getElementById('manual').style.display = 'block';
+}
+
+function fetchWithTimeout(url, ms) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) => setTimeout(() => reject('timeout'), ms))
+  ]);
+}
+
+function goManual() {
+  const ip = document.getElementById('ipInput').value.trim();
+  if (ip) window.location.href = `http://${ip}:${PORT}`;
+}
+
+tryConnect();
+</script>
+</body>
+</html>
